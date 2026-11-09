@@ -136,13 +136,18 @@ static ERL_NIF_TERM export_split_at(ErlNifEnv *env, int argc,
 
   ERL_NIF_TERM return_term;
 
+  if (split_pos > old_payload.size) {
+    return_term = bunch_make_error_str(env, "invalid_position");
+    goto exit_split_at;
+  }
+
   ShmexLibResult result = shmex_open_and_mmap(&old_payload);
   if (SHMEX_RES_OK != result) {
     return_term = shmex_make_error_term(env, result);
     goto exit_split_at;
   }
 
-  int new_size = old_payload.size - split_pos;
+  unsigned int new_size = old_payload.size - split_pos;
   new_payload.capacity = new_size;
   new_payload.size = new_size;
 
@@ -180,6 +185,11 @@ static ERL_NIF_TERM export_trim_leading(ErlNifEnv *env, int argc,
   BUNCH_PARSE_UINT_ARG(1, offset);
   ERL_NIF_TERM return_term;
   ShmexLibResult result;
+
+  if (offset > payload.size) {
+    return_term = bunch_make_error_str(env, "invalid_offset");
+    goto exit_trim_leading;
+  }
 
   result = shmex_open_and_mmap(&payload);
   if (SHMEX_RES_OK != result) {

@@ -154,6 +154,14 @@ defmodule Shmex.NativeTest do
     assert shm_b.size == data_size - split_pos
   end
 
+  test "split_at/2 with position greater than size", %{data: data, data_size: data_size} do
+    assert {:ok, shm} = @module.allocate(%Shmex{name: @shm_name})
+    assert {:ok, shm} = @module.write(shm, data)
+
+    assert @module.split_at(shm, data_size + 1) == {:error, :invalid_position}
+    assert @module.read(shm) == {:ok, data}
+  end
+
   @tag :shm_resizable
   test "append/2", %{data: data, data_size: data_size} do
     name_a = @shm_name <> "a"
@@ -213,6 +221,14 @@ defmodule Shmex.NativeTest do
 
     <<_discarded::binary-size(offset), trimmed_data::binary>> = data
     assert @module.read(shm) == {:ok, trimmed_data}
+  end
+
+  test "trim/2 with offset greater than size", %{data: data, data_size: data_size} do
+    assert {:ok, shm} = @module.allocate(%Shmex{name: @shm_name})
+    assert {:ok, shm} = @module.write(shm, data)
+
+    assert @module.trim(shm, data_size + 1) == {:error, :invalid_offset}
+    assert @module.read(shm) == {:ok, data}
   end
 
   @spec testing_data(any()) :: [data: String.t(), data_size: non_neg_integer()]

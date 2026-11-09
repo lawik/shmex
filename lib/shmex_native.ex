@@ -69,6 +69,8 @@ defmodule Shmex.Native do
   the specified position into a new shared memory.
 
   `shm` has to be an existing shared memory (obtained via `allocate/1`).
+  `position` must not be greater than `shm.size`, otherwise
+  `{:error, :invalid_position}` is returned.
 
   It virtually trims the existing shared memory to `position` bytes
   by setting `size` to `position` (The actual data is still present)
@@ -76,7 +78,7 @@ defmodule Shmex.Native do
   """
   @spec split_at(Shmex.t(), position :: non_neg_integer()) ::
           {:ok, {Shmex.t(), Shmex.t()}}
-          | {:error, {:file.posix(), :shm_open | :mmap | :ftruncate}}
+          | {:error, :invalid_position | {:file.posix(), :shm_open | :mmap | :ftruncate}}
   defnif split_at(shm, position)
 
   @doc """
@@ -113,9 +115,13 @@ defmodule Shmex.Native do
   @doc """
   Drops `bytes` bytes from the beginning of shared memory area and
   trims it to match the new size.
+
+  `bytes` must not be greater than `shm.size`, otherwise
+  `{:error, :invalid_offset}` is returned.
   """
   @spec trim(Shmex.t(), bytes :: non_neg_integer) ::
-          {:ok, Shmex.t()} | {:error, {:file.posix(), :shm_open | :mmap}}
+          {:ok, Shmex.t()}
+          | {:error, :invalid_offset | {:file.posix(), :shm_open | :mmap | :ftruncate}}
   def trim(shm, bytes) do
     with {:ok, trimmed_front} <- trim_leading(shm, bytes) do
       trim(trimmed_front)

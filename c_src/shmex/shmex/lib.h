@@ -15,6 +15,7 @@
 #define SHMEX_ELIXIR_STRUCT_ENTRIES 5
 #define SHMEX_SHM_NAME_PREFIX "/shmex-"
 #define SHMEX_ALLOC_MAX_ATTEMPTS 1000
+#define SHMEX_UNLINK_MAX_WAIT_NS 100000000LL
 #define SHMEX_SHM_NAME_PREFIX_LEN strlen(SHMEX_SHM_NAME_PREFIX)
 #define SHMEX_SHM_NAME_TIME_ID_LEN 20
 #define SHMEX_SHM_NAME_LEN                                                     \

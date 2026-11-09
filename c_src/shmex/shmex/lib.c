@@ -201,9 +201,19 @@ void shmex_shm_unlink(char *name) {
     // sufficient to wait here for a moment (usually one microsecond or
     // nanosecond, depending on OS clock resolution) to make sure that names
     // will not be reused.
+    //
+    // The wait is bounded: a name carrying a timestamp from the future (which
+    // Shmex itself never generates, but a user-supplied struct may) would
+    // otherwise spin forever on a scheduler thread.
+    struct timespec start, now;
+    clock_gettime(CLOCK_MONOTONIC, &start);
     do {
       shmex_generate_shm_name(current_name, 0);
-    } while (strncmp(name, current_name, name_cmp_prefix_len) >= 0);
+      clock_gettime(CLOCK_MONOTONIC, &now);
+    } while (strncmp(name, current_name, name_cmp_prefix_len) >= 0 &&
+             (long long)(now.tv_sec - start.tv_sec) * 1000000000LL +
+                     (now.tv_nsec - start.tv_nsec) <
+                 SHMEX_UNLINK_MAX_WAIT_NS);
   }
   shm_unlink(name);
 }

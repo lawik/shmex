@@ -40,7 +40,8 @@ defmodule Shmex.Native do
   @doc """
   Reads the contents of shared memory and returns it as a binary.
   """
-  @spec read(Shmex.t()) :: {:ok, binary} | {:error, {:file.posix(), :shm_open | :mmap}}
+  @spec read(Shmex.t()) ::
+          {:ok, binary} | {:error, :invalid_payload | {:file.posix(), :shm_open | :mmap}}
   def read(%Shmex{size: size} = shm) do
     read(shm, size)
   end
@@ -51,17 +52,20 @@ defmodule Shmex.Native do
   `cnt` should not be greater than `shm.size`
   """
   @spec read(Shmex.t(), read_size :: non_neg_integer()) ::
-          {:ok, binary()} | {:error, :invalid_read_size | {:file.posix(), :shm_open | :mmap}}
+          {:ok, binary()}
+          | {:error, :invalid_read_size | :invalid_payload | {:file.posix(), :shm_open | :mmap}}
   defnif read(shm, read_size)
 
   @doc """
   Writes the binary into the shared memory.
 
   Overwrites the existing content. Increases the capacity of shared memory
-  to fit the data.
+  to fit the data. Fails with `{:error, {:einval, :ftruncate}}` if
+  OS does not support changing shared memory capacity.
   """
   @spec write(Shmex.t(), data :: binary()) ::
-          {:ok, Shmex.t()} | {:error, {:file.posix(), :shm_open | :mmap}}
+          {:ok, Shmex.t()}
+          | {:error, :invalid_payload | {:file.posix(), :shm_open | :mmap | :ftruncate}}
   defnif write(shm, data)
 
   @doc """

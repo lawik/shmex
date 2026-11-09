@@ -108,11 +108,16 @@ static ERL_NIF_TERM export_write(ErlNifEnv *env, int argc,
   BUNCH_PARSE_BINARY_ARG(1, data);
   ERL_NIF_TERM return_term;
 
+  ShmexLibResult result;
   if (payload.capacity < data.size) {
-    shmex_set_capacity(&payload, data.size);
+    result = shmex_set_capacity(&payload, data.size);
+    if (SHMEX_RES_OK != result) {
+      return_term = shmex_make_error_term(env, result);
+      goto exit_write;
+    }
   }
 
-  ShmexLibResult result = shmex_open_and_mmap(&payload);
+  result = shmex_open_and_mmap(&payload);
   if (SHMEX_RES_OK != result) {
     return_term = shmex_make_error_term(env, result);
     goto exit_write;

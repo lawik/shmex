@@ -101,6 +101,18 @@ ShmexLibResult shmex_open_and_mmap(Shmex *payload) {
     goto shmex_open_and_mmap_exit;
   }
 
+  // The struct is a copy of the segment's metadata and may be stale (e.g. the
+  // segment was shrunk via another copy). Touching mapped pages beyond the end
+  // of the segment raises SIGBUS, so refuse to map more than the segment holds
+  // or to pretend there is more data than capacity.
+  struct stat segment_stat;
+  if (fstat(fd, &segment_stat) < 0 ||
+      segment_stat.st_size < (off_t)payload->capacity ||
+      payload->size > payload->capacity) {
+    result = SHMEX_ERROR_INVALID_PAYLOAD;
+    goto shmex_open_and_mmap_exit;
+  }
+
   payload->mapped_memory =
       mmap(NULL, payload->capacity, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
   if (MAP_FAILED == payload->mapped_memory) {

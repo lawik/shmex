@@ -121,6 +121,26 @@ defmodule Shmex.NativeTest do
     end
   end
 
+  describe "read/1 with a stale struct" do
+    setup :testing_data
+
+    test "when the segment was shrunk via another copy", %{data: data} do
+      assert {:ok, shm} = @module.allocate(%Shmex{name: @shm_name})
+      assert {:ok, stale_shm} = @module.write(shm, data)
+      assert {:ok, shm} = @module.set_capacity(stale_shm, 4)
+
+      assert @module.read(shm) == {:ok, binary_part(data, 0, 4)}
+      assert @module.read(stale_shm) == {:error, :invalid_payload}
+    end
+
+    test "when size exceeds capacity", %{data: data} do
+      assert {:ok, shm} = @module.allocate(%Shmex{name: @shm_name})
+      assert {:ok, shm} = @module.write(shm, data)
+
+      assert @module.read(%{shm | size: shm.capacity + 1}) == {:error, :invalid_payload}
+    end
+  end
+
   describe "read/2 from non-empty shm" do
     setup :testing_data
 

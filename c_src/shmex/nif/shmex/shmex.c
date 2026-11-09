@@ -43,7 +43,7 @@ ShmexLibResult shmex_allocate(ErlNifEnv *env, ErlNifResourceType *guard_type,
 void shmex_add_guard(ErlNifEnv *env, ErlNifResourceType *guard_type,
                      Shmex *payload) {
   ShmexGuard *guard = enif_alloc_resource(guard_type, sizeof(*guard));
-  strcpy(guard->name, payload->name);
+  snprintf(guard->name, sizeof(guard->name), "%s", payload->name);
   payload->guard = enif_make_resource(env, guard);
   enif_release_resource(guard);
 }

@@ -24,10 +24,12 @@ defmodule Shmex.Native do
   This function should be only used when `Shmex` struct was created by
   some other NIF and even though the SHM exists, it's guard field is set to `nil`.
   Trying to use it with SHM obtained via `allocate/1` will result in error.
+  The struct has to have a `name` of at most 255 bytes, otherwise
+  `{:error, :invalid_payload}` is returned.
 
   See also docs for `allocate/1`
   """
-  @spec add_guard(Shmex.t()) :: {:ok, Shmex.t()} | {:error, :already_guarded}
+  @spec add_guard(Shmex.t()) :: {:ok, Shmex.t()} | {:error, :already_guarded | :invalid_payload}
   defnif add_guard(shm)
 
   @doc """

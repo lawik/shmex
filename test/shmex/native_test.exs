@@ -55,6 +55,15 @@ defmodule Shmex.NativeTest do
       assert {:ok, shm} = @module.allocate(%Shmex{name: @shm_name})
       assert @module.add_guard(shm) == {:error, :already_guarded}
     end
+
+    test "when name is nil" do
+      assert @module.add_guard(%Shmex{name: nil}) == {:error, :invalid_payload}
+    end
+
+    test "when name is too long" do
+      name = "/" <> String.duplicate("a", 1000)
+      assert @module.add_guard(%Shmex{name: name}) == {:error, :invalid_payload}
+    end
   end
 
   @tag :shm_tmpfs

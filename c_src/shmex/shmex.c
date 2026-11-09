@@ -46,14 +46,27 @@ static ERL_NIF_TERM export_add_guard(ErlNifEnv *env, int argc,
                                      const ERL_NIF_TERM argv[]) {
   BUNCH_UNUSED(argc);
   PARSE_SHMEX_ARG(0, payload);
+  ERL_NIF_TERM return_term;
 
   ShmexGuard *guard;
   if (enif_get_resource(env, payload.guard, SHMEX_GUARD_RESOURCE_TYPE,
                         (void **)&guard)) {
-    return bunch_make_error(env, enif_make_atom(env, "already_guarded"));
+    return_term = bunch_make_error(env, enif_make_atom(env, "already_guarded"));
+    goto exit_add_guard;
   };
+
+  // The guard stores a copy of the name in a fixed-size buffer and the name
+  // has not been validated by shm_open here (unlike in allocate).
+  if (payload.name == NULL || strlen(payload.name) > NAME_MAX) {
+    return_term = shmex_make_error_term(env, SHMEX_ERROR_INVALID_PAYLOAD);
+    goto exit_add_guard;
+  }
+
   shmex_add_guard(env, SHMEX_GUARD_RESOURCE_TYPE, &payload);
-  return bunch_make_ok_tuple(env, shmex_make_term(env, &payload));
+  return_term = bunch_make_ok_tuple(env, shmex_make_term(env, &payload));
+exit_add_guard:
+  shmex_release(&payload);
+  return return_term;
 }
 
 static ERL_NIF_TERM export_set_capacity(ErlNifEnv *env, int argc,
